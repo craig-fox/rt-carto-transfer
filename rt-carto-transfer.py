@@ -1,9 +1,12 @@
 from __future__ import print_function
-import boto
+from carto.auth import APIKeyAuthClient
+from carto.exceptions import CartoException
+from carto.sql import SQLClient
+from carto.datasets import DatasetManager
+from carto.file_import import FileImportJobManager
 import psycopg2
-import csv
 import json
-import requests
+import csv
 
 def writeCSVFromTable(name):
     sql_template = "SELECT * FROM {} LIMIT 5"
@@ -16,49 +19,51 @@ def writeCSVFromTable(name):
         a.writerows(result)
     print("{} csv written".format(name))
 
-def writeToCarto(name):
-    url_template = 'https://{hostname}.carto.com/api/v1/imports/?api_key={api}'
-    url = url_template.format(hostname=data['carto']['account'], api=data['carto']['api'])
-    print(url)
-    csv = 'csv/' + name + '.csv'
-    r_json = None
-    with open(csv,'r') as f:
-      r = requests.post(url, files={csv:f})
-      r_json = r.json()
-    print(r_json)
-    queued_item = (name, r_json['item_queue_id'])
-    print(queued_item)
-    return queued_item
-   
-def readProgress(name, item_id):
-    url_template = 'https://{hostname}.carto.com/api/v1/imports/{item_id}?api_key={api}'
-    url = url_template.format(hostname=data['carto']['account'], item_id=item_id, api=data['carto']['api'])
-    print(url)
-    
+def deleteDataset(id, name):
+    dataset = dataset_manager.get(id)
+    dataset.delete()
+    print('Dataset {name} deleted'.format(name=name))
+
+def getDatasetId(name, sets):
+    ds_iter = filter(lambda ds: ds.name==name, sets)
+    ds_id = None
+    for ds in ds_iter:
+        ds_id = ds.id
+        break
+    return ds_id
     
 
 with open('config.json') as json_data_file:
-    data = json.load(json_data_file)
-
-print(data['mysql']['host'])
-
+    config = json.load(json_data_file)
 db = None
-db = psycopg2.connect(host=data['mysql']['host'],
-                      database=data['mysql']['db'],
-                      user=data['mysql']['user'],
-                      password=data['mysql']['password'])
-print("Connected to database")
+db = psycopg2.connect(host=config['mysql']['host'],
+                      database=config['mysql']['db'],
+                      user=config['mysql']['user'],
+                      password=config['mysql']['password'])
+print("Connected to AWS database {name}".format(name=config['mysql']['db']))
+
+USERNAME=config['carto']['account']
+USR_BASE_URL = "https://{user}.carto.com/".format(user=USERNAME)
+auth_client = APIKeyAuthClient(api_key=config['carto']['api'], base_url=USR_BASE_URL)
 
 cursor = db.cursor()
-tasks = data['tasks']
-item_queue = []
+tasks = config['tasks']
+dataset_manager = DatasetManager(auth_client)
 
-#for task in tasks:
-#    writeCSVFromTable(task['name'])
+datasets = dataset_manager.all()
 
 for task in tasks:
-    queued_item = writeToCarto(task['name'])
-    item_queue.append(queued_item)
+    name = task['name']
+    ds_id = getDatasetId(name, datasets)
+    if ds_id:
+        deleteDataset(ds_id, name)
+    writeCSVFromTable(name)
+    try:
+       csv_file = './csv/{name}.csv'.format(name=name)
+       dataset = dataset_manager.create(csv_file)
+       print('Created dataset {name} with id {id}'.format(name=dataset.name,id={dataset.id}))
+    except CartoException as e:
+        print("some error ocurred", e)
     
 print("Closing database") 
 db.close()
