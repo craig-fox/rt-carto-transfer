@@ -10,7 +10,7 @@ import csv
 import asyncio 
 
 def writeCSVFromTable(name):
-    sql_template = "SELECT * FROM {} LIMIT 100"
+    sql_template = config[sql_template]
     sql = sql_template.format(name)
     number_of_rows = cursor.execute(sql)
     result = cursor.fetchall()
@@ -42,7 +42,7 @@ async def createCartoDataset(name):
         print("some error ocurred", e)
     
     
-
+config = None
 with open('config.json') as json_data_file:
     config = json.load(json_data_file)
 db = None
@@ -53,7 +53,7 @@ db = psycopg2.connect(host=config['mysql']['host'],
 print("Connected to AWS database {name}".format(name=config['mysql']['db']))
 
 USERNAME=config['carto']['account']
-USR_BASE_URL = "https://{user}.carto.com/".format(user=USERNAME)
+USR_BASE_URL = config['carto']['url_base'].format(user=USERNAME)
 auth_client = APIKeyAuthClient(api_key=config['carto']['api'], base_url=USR_BASE_URL)
 
 cursor = db.cursor()
