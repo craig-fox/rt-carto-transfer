@@ -7,9 +7,10 @@ from carto.file_import import FileImportJobManager
 import psycopg2
 import json
 import csv
+import asyncio 
 
 def writeCSVFromTable(name):
-    sql_template = "SELECT * FROM {} LIMIT 5"
+    sql_template = "SELECT * FROM {} LIMIT 100"
     sql = sql_template.format(name)
     number_of_rows = cursor.execute(sql)
     result = cursor.fetchall()
@@ -31,6 +32,15 @@ def getDatasetId(name, sets):
         ds_id = ds.id
         break
     return ds_id
+
+async def createCartoDataset(name):
+    try:
+       csv_file = './csv/{name}.csv'.format(name=name)
+       dataset = dataset_manager.create(csv_file)
+       print('Created dataset {name} with id {id}'.format(name=dataset.name,id={dataset.id}))
+    except CartoException as e:
+        print("some error ocurred", e)
+    
     
 
 with open('config.json') as json_data_file:
@@ -52,18 +62,18 @@ dataset_manager = DatasetManager(auth_client)
 
 datasets = dataset_manager.all()
 
+carto_tasks = []
 for task in tasks:
     name = task['name']
     ds_id = getDatasetId(name, datasets)
     if ds_id:
         deleteDataset(ds_id, name)
     writeCSVFromTable(name)
-    try:
-       csv_file = './csv/{name}.csv'.format(name=name)
-       dataset = dataset_manager.create(csv_file)
-       print('Created dataset {name} with id {id}'.format(name=dataset.name,id={dataset.id}))
-    except CartoException as e:
-        print("some error ocurred", e)
+    carto_tasks.append(asyncio.ensure_future(createCartoDataset(name)))
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(asyncio.wait(carto_tasks))  
+loop.close()
     
 print("Closing database") 
 db.close()
