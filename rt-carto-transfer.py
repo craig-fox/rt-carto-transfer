@@ -10,13 +10,15 @@ import csv
 import asyncio 
 
 def writeCSVFromTable(name):
-    sql_template = config[sql_template]
+    sql_template = config['sql_template']
     sql = sql_template.format(name)
     number_of_rows = cursor.execute(sql)
+    columns = [i[0] for i in cursor.description]
     result = cursor.fetchall()
     csvName = 'csv/' + name + '.csv'
     with open(csvName, 'w', newline='') as fp:
         a = csv.writer(fp, delimiter=',')
+        a.writerow(columns)
         a.writerows(result)
     print("{} csv written".format(name))
 
