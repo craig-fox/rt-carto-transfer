@@ -1,35 +1,15 @@
 {
     "tasks":[
         {
-          "name":"vw_regions_exits_201807_a_m",
+          "name":"vw_regions_exits_data_1",
           "table_name":"vw_regions_exits",
-          "template": "select * from {} WHERE travel_month = '201807' AND tourism_region_name ~* '^[A-M].+$'"
+          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[A-L].+$'"
         },
         {
-          "name":"vw_regions_exits_201807_n_z",
+          "name":"vw_regions_exits_data_2",
           "table_name":"vw_regions_exits",
-          "template": "select * from {} WHERE travel_month = '201807' AND tourism_region_name ~* '^[N-Z].+$'"
-        },
-        {
-          "name":"vw_regions_exits_201808_a_m",
-          "table_name":"vw_regions_exits",
-          "template": "select * from {} WHERE travel_month = '201808' AND tourism_region_name ~* '^[A-M].+$'"
-        },
-        {
-          "name":"vw_regions_exits_201808_n_z",
-          "table_name":"vw_regions_exits",
-          "template": "select * from {} WHERE travel_month = '201808' AND tourism_region_name ~* '^[N-Z].+$'"
-        },
-         {
-          "name":"vw_regions_exits_201809_a_m",
-          "table_name":"vw_regions_exits",
-          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[A-M].+$'"
-        },
-        {
-          "name":"vw_regions_exits_201809_n_z",
-          "table_name":"vw_regions_exits",
-          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[N-Z].+$'"
+          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[M-Z].+$'"
         }
-    
+
     ]
 }
