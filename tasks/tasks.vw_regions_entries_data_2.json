@@ -1,0 +1,9 @@
+{
+    "tasks":[
+        {
+          "name":"vw_regions_entries_data_2",
+          "table_name": "vw_regions_entries",
+          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[A-K].+$' AND tourism_region_name != 'Eyre Peninsula'"
+        }
+    ]
+}

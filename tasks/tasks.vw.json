@@ -1,0 +1,12 @@
+{
+  "tasks":[
+    {
+      "name":"vw_poi_master"
+    },
+    {
+      "name":"vw_custom_what_events_services"
+    }
+    
+  ]
+
+}

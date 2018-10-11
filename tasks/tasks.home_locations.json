@@ -1,0 +1,10 @@
+{
+    "tasks":[
+    {
+      "name":"home_locations",
+      "template": "SELECT * FROM {} WHERE local_month = '2018-06-01'"
+    }
+    
+  ]
+
+}

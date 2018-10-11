@@ -1,0 +1,8 @@
+{
+    "tasks":[
+        {
+          "name":"vw_region_entries_exits",
+          "template":"SELECT * FROM {} WHERE travel_month >= '2018-06-01' and travel_month < '2018-08-01'"
+        }
+      ]
+}

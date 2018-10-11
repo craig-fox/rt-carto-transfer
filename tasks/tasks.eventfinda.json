@@ -1,0 +1,10 @@
+{
+    "tasks":[
+        {
+          "name":"vw_events_nz_eventfinda_with_regions"
+        },
+        {
+          "name":"vw_events_au_eventfinda_with_regions"
+        }
+      ]
+}

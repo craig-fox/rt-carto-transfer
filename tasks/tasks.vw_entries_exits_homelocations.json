@@ -1,0 +1,9 @@
+{
+    "tasks":[
+        {
+          "name":"vw_entries_exits_home_locations",
+          "template": "SELECT * FROM {} WHERE travel_month = '2018-06-01'"
+        }
+    
+      ]
+}

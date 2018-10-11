@@ -1,0 +1,13 @@
+{
+    "tasks":[
+        {
+          "name":"yorkepeninsula_all_events"
+        },
+        {
+          "name":"ep_all_events"
+        },
+        {
+          "name":"vw_entries_exits_home_locations"
+        }
+      ]
+}

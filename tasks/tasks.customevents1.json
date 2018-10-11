@@ -1,0 +1,9 @@
+{
+    "tasks":[
+        {
+          "name":"vw_custom_what_events",
+          "template": "select * from {} WHERE local_month_text in ('201807','201808') ORDER BY gz_id LIMIT 1000000"
+        }
+    
+      ]
+}

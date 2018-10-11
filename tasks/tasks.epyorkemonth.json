@@ -1,0 +1,23 @@
+{
+
+   "tasks":[
+        {
+          "name":"yorkepeninsula_all_events"
+        },
+        {
+          "name":"yorkepeninsula_generalised_activity"
+        },
+        {
+          "name":"yorkepeninsula_pois"
+        },
+        {
+          "name":"ep_all_events"
+        },
+        {
+          "name":"ep_generalised_activity"
+        },
+        {
+          "name":"ep_pois"
+        }
+      ]
+}

@@ -1,0 +1,10 @@
+{
+    "tasks":[
+        {
+          "name":"poi_master"
+        },
+        {
+          "name":"events_au_eventfinda_with_regions"
+        }
+      ]
+}
