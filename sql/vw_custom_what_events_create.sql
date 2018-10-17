@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS vw_custom_what_events (
+  gz_id text,
+  user_id text,
+  local_datetime text,
+  local_month text,
+  local_day text,
+  local_month_text text,
+  latitude text,
+  longitude text,
+  poi_id text,
+  poi_name text,
+  rt_category_id text,
+  group_designation text,
+  tourism_region_name text,
+  state text,
+  what text,
+  category_id text,
+  display_full text,
+  parent_display_full text
+)

@@ -4,28 +4,28 @@ from carto.exceptions import CartoException
 from carto.sql import SQLClient
 from carto.datasets import DatasetManager
 from carto.file_import import FileImportJobManager
+from itertools import *
 import psycopg2
 import json
 import csv
 import asyncio
 import sys
+import time
 
-def writeCSVFromTable(task):
+def connectToAWSDb():
+    print("Host {}, db {}, user {}".format(config['mysql']['host'], config['mysql']['db'], config['mysql']['user']))
+    db = psycopg2.connect(host=config['mysql']['host'],
+                      database=config['mysql']['db'],
+                      user=config['mysql']['adminuser'],
+                      password=config['mysql']['adminpassword'])
+    print("Connected to AWS database {name}".format(name=config['mysql']['db']))
+    return db
+
+def writeCSVFromTable(task, target):
     name = task['name']
-    try:
-        sql_template = task['template']
-    except KeyError:
-        sql_template = config['sql_template']
-   
-    print("{} SQL template ".format(sql_template))
-    try:
-        table_name = task['table_name']
-    except KeyError:
-        table_name = name
-
-    print("Table Name {}".format(table_name))
-   
-    sql = sql_template.format(table_name)
+    template = task['template']
+    sql = template.format(target=target)
+    print("{} SQL".format(sql))
     number_of_rows = cursor.execute(sql)
     columns = [i[0] for i in cursor.description]
     result = cursor.fetchall()
@@ -36,19 +36,6 @@ def writeCSVFromTable(task):
         a.writerows(result)
     print("{} csv written".format(name))
 
-def deleteDataset(id, name):
-    dataset = dataset_manager.get(id)
-    dataset.delete()
-    print('Dataset {name} deleted'.format(name=name))
-
-def getDatasetId(name, sets):
-    ds_iter = filter(lambda ds: ds.name==name, sets)
-    ds_id = None
-    for ds in ds_iter:
-        ds_id = ds.id
-        break
-    return ds_id
-
 async def createCartoDataset(name):
     try:
        csv_file = './csv/{name}.csv'.format(name=name)
@@ -57,67 +44,137 @@ async def createCartoDataset(name):
     except CartoException as e:
         print("some error ocurred", e)
 
-async def runCartoImport(name):
-    try:
-       csv_file = './csv/{name}.csv'.format(name=name)
-       file_import_manager = FileImportJobManager(auth_client)
-       file_import = file_import_manager.create(csv_file)
-       file_id = file_import.get_id()
-     #  file_name = file_import.get_table_name()
-       print("Importing file {name} with id {id}".format(name=name, id={file_id}))
-       file_import.run()
-       while(file_import.state != "complete" and file_import.state != "created" and file_import.state != "success"):
-           time.sleep(20)
-           file_import.refresh()
-           print("Importing with state {state}").format(state=file_import.state)
-           if (file_import.state == 'failure'):
-               print('The error code is: ' + str(file_import))
-               break
-       if(file_import_state == "complete"):
-           print('Imported file {name} with id {id}'.format(name=name,id={file_id}))
-       else:
-           print('File {name} failed with import state {state}'.format(name=name, state=file_import_state))
-    except CartoException as e:
-        print("some error ocurred", e)
-    
+def processTasks(tasks, target):
+    carto_tasks = []
+    for task in tasks:
+        name = task['name']
+        carto_tasks.append(asyncio.ensure_future(createCartoDataset(name)))
+        writeCSVFromTable(task, target)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(asyncio.wait(carto_tasks))
+    loop.close()
+
+def createTable(script):
+    #print("the script is {script}".format(script=script))
+    table_sql = script
+    runScript(table_sql)
+    print("Table created")
+    carto_sql = "SELECT cdb_cartodbfytable('ryanjudd', '{}')".format(target)
+    #print("the script is {script}".format(script=carto_sql))
+    runScript(carto_sql)
+    print("Table adapted for Carto")
+
+def maxCartoId():
+    cartoid_sql = "SELECT MAX(cartodb_id) FROM {}".format(target)
+    #print("the script is {script}".format(script=cartoid_sql))
+    data = runScript(cartoid_sql)
+    return data['rows'][0]['max'] or 0
+
+def pause(secs):
+    print("Pausing script execution for {} seconds".format(secs))
+    time.sleep(secs)
+
+def rateSeconds():
+    times = next(counter)
+    seconds = 10 + (5* (times // 3))
+    print("Now pausing for {}".format(seconds))
+    return seconds
+
+def dropTempTables(tables):
+    for table in tables:
+        print("Dropping temp table {}".format(table))
+        delete_sql = "DROP TABLE {}".format(table)
+        runScript(delete_sql)
+        pause(10)
+    print("All temp tables dropped")
+
+
+def runScript(script):
+    data = None
+    while True:
+        try:
+            data = carto_sql_client.send(script)
+            break
+        except CartoException as e:
+            script_error = str(e)
+            print("some error ocurred", script_error)
+            if script_error == "Rate limit exceeded":
+                print("Slowing down to reduce rate limit")
+                pause(rateSeconds())
+                continue
+            else:
+                print("Could not resolve error")
+                break
+    return data
+
+def insertIntoTable(script, source, row_filter):
+    max_carto_dbid = maxCartoId()
+    insert_sql = script.format(source=source, maxid=max_carto_dbid)
+    insert_sql = insert_sql + " {row_filter} ".format(row_filter=row_filter)
+    print("Inserting rows with filter: {}".format(row_filter))
+    data = runScript(insert_sql)
+    pause(10)
+    return data
+
+def transferData():
+    with open(process['scripts']['create'].format(target=target), 'r') as create_file:
+        create_sql = create_file.read()
+    with open(process['scripts']['insert'].format(target=target), 'r') as insert_file:
+        insert_sql = insert_file.read()
+    pause(20)
+    createTable(create_sql)
+
+    total_rows = None
+    row_filter = None
+    lower_limit = None
+    upper_limit = None
+    data = None
+    CHUNK = 100000
+
+    for table in temp_tables:
+        print("Transferring data for {}".format(table))
+        total_rows = None
+        while total_rows == None or total_rows == CHUNK:
+            if total_rows == None:
+                upper_limit = CHUNK
+                row_filter = "AND cartodb_id <= {upper_limit}".format(upper_limit=upper_limit)
+                data = insertIntoTable(insert_sql, table, row_filter)
+                total_rows = data['total_rows']
+                print("Returned {} rows".format(total_rows))
+            elif total_rows == CHUNK:
+                lower_limit = upper_limit
+                upper_limit = upper_limit + CHUNK
+                row_filter = " AND cartodb_id > {lower} AND cartodb_id <= {upper}".format(upper=upper_limit, lower=lower_limit)
+                data = insertIntoTable(insert_sql, table, row_filter)
+                total_rows = data['total_rows']
+                print("Returned {} rows".format(total_rows))
+
 config = None
-tasks = None
+process = None
+db = None
+counter = count(1)
+
 with open('config.json') as json_data_file:
     config = json.load(json_data_file)
-tasks_file_name = sys.argv[1]
-with open('./tasks/{file}'.format(file=tasks_file_name)) as json_tasks_file:
-    tasks = json.load(json_tasks_file)
-db = None
-print("Host {}, db {}, user {}, password {}".format(config['mysql']['host'], config['mysql']['db'], config['mysql']['user'], config['mysql']['password']))
-db = psycopg2.connect(host=config['mysql']['host'],
-                      database=config['mysql']['db'],
-                      user=config['mysql']['adminuser'],
-                      password=config['mysql']['adminpassword'])
-print("Connected to AWS database {name}".format(name=config['mysql']['db']))
+process_file_name = sys.argv[1]
+with open('./{file}'.format(file=process_file_name)) as json_process_file:
+    process = json.load(json_process_file)
+db = connectToAWSDb()
 
 USERNAME=config['carto']['account']
 USR_BASE_URL = config['carto']['url_base'].format(user=USERNAME)
 auth_client = APIKeyAuthClient(api_key=config['carto']['api'], base_url=USR_BASE_URL)
-
 cursor = db.cursor()
-tasks = tasks['tasks']
 dataset_manager = DatasetManager(auth_client)
+carto_sql_client = SQLClient(auth_client)
 
-datasets = dataset_manager.all()
+target = process['target']
+temp_tables = process['temp_tables']
+tasks = process['tasks']
+processTasks(tasks, target)
 
-carto_tasks = []
-for task in tasks:
-    name = task['name']
-    ds_id = getDatasetId(name, datasets)
-    #if ds_id:
-    #    deleteDataset(ds_id, name)
-    writeCSVFromTable(task)
-    carto_tasks.append(asyncio.ensure_future(createCartoDataset(name)))
-    #carto_tasks.append(asyncio.ensure_future(runCartoImport(name)))
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(asyncio.wait(carto_tasks))  
-loop.close()
-    
-print("Closing database") 
+print("Closing AWS database")
 db.close()
+transferData()
+dropTempTables(temp_tables)

@@ -1,0 +1,101 @@
+{
+  "target":"vw_custom_what_events",
+  "temp_tables": [
+    "vw_custom_what_events_data_201809_6",
+    "vw_custom_what_events_data_201809_7",
+    "vw_custom_what_events_data_201809_8",
+    "vw_custom_what_events_data_201809_9",
+    "vw_custom_what_events_data_201809_10",
+    "vw_custom_what_events_data_201809_11"
+  ],
+  "tasks": [
+    {
+      "name":"vw_custom_what_events_data_201807_2",
+      "template":"select * from {target} WHERE local_month_text = '201807' AND gz_id NOT BETWEEN 1603206974 AND 1613427414 AND tourism_region_name ~* '^[C-J].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201807_3",
+      "template":"select * from {target} WHERE local_month_text = '201807' AND gz_id NOT BETWEEN 1603206974 AND 1613427414 AND tourism_region_name ~* '^[K-M].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201807_4",
+      "template":"select * from {target} WHERE local_month_text = '201807' AND gz_id NOT BETWEEN 1603206974 AND 1613427414 AND tourism_region_name ~* '^[N-S].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201807_5",
+      "template":"select * from {target} WHERE local_month_text = '201807' AND gz_id NOT BETWEEN 1603206974 AND 1613427414 AND tourism_region_name ~* '^[T-Z].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201808_1",
+      "template":"select * from {target} WHERE local_month_text = '201808' AND tourism_region_name ~* '^[A-B].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201808_2",
+      "template":"select * from {target} WHERE local_month_text = '201808' AND tourism_region_name ~* '^[C-F].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201808_3",
+      "template":"select * from {target} WHERE local_month_text = '201808' AND tourism_region_name ~* '^[G-M].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201808_4",
+      "template":"select * from {target} WHERE local_month_text = '201808' AND tourism_region_name ~* '^[N-R].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201808_5",
+      "template":"select * from {target} WHERE local_month_text = '201808' AND tourism_region_name ~* '^[S-V].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201808_6",
+      "template":"select * from {target} WHERE local_month_text = '201808' AND tourism_region_name ~* '^[W-Z].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_1",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[A].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_2",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[B].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_3",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[C].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_4",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[D-K].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_5",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[L-M].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_6",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[N].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_7",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[O-S].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_8",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[T-V].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_9",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[W].+$' AND poi_name ~* '^[A-M].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_10",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[W].+$' AND poi_name ~* '^[N-Z].+$'"
+    },
+    {
+      "name":"vw_custom_what_events_data_201809_11",
+      "template":"select * from {target} WHERE local_month_text = '201809' AND tourism_region_name ~* '^[X-Z].+$'"
+    }
+  ],
+  "scripts":{
+      "create": "./sql/{target}_create.sql",
+      "insert": "./sql/{target}_insert.sql"
+  }
+}

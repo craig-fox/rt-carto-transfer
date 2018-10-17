@@ -1,6 +1,7 @@
 config.json
-csv/
+csv/*.csv
 rt-carto-test.py
 Test*
 archive/
 *.old
+tasks/

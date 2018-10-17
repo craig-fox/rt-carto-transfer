@@ -1,0 +1,16 @@
+{
+    "target": "vw_regions_entries_exits_with_user_details",
+    "temp_tables": [
+        "vw_regions_entries_exits_with_user_details_data_1"
+    ],
+    "tasks":[
+        {
+          "name":"vw_regions_entries_exits_with_user_details_data_1",
+          "template":"select * from {target} WHERE 1=1"
+        }
+      ],
+    "scripts":{
+        "create": "./sql/{target}_create.sql",
+        "insert": "./sql/{target}_insert.sql"
+    }
+}

@@ -3,12 +3,12 @@
         {
           "name":"vw_regions_entries_exits_hourly_data_1",
           "table_name": "vw_regions_entries_exits_hourly",
-          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[A-K].+$'"
+          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[A-L].+$'"
         },
         {
           "name":"vw_regions_entries_exits_hourly_data_2",
           "table_name": "vw_regions_entries_exits_hourly",
-          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[L-Z].+$'"
+          "template": "select * from {} WHERE travel_month = '201809' AND tourism_region_name ~* '^[M-Z].+$'"
         }
     ]
 }
